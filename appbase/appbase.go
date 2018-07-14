@@ -13,51 +13,90 @@ var (
 func App() *Application {
 	once.Do(func() {
 		instance = &Application{
-			pm:		pluginManager{plugins: make(map[string]IPlugin)},
+			plugins: make(map[string]Plugin),
 			}
 	})
 	return instance
 }
 
 type Application struct {
-	pm pluginManager
+	plugins map[string]Plugin
 }
 
 // get plugin by plugin type name
-func (app *Application) Get(name string) IPlugin {
-	plugin := app.pm.find(name)
-	if plugin == nil {
-		panic("unable to find plugin: " + name)
-	}
-	return plugin
+func (app *Application) GetByName(name string) Plugin {
+	plug := app.findByName(name)
+	assertEx(plug != nil, "unable to find plugin: " + name)
+	return plug
 }
 
 // register plugin, need input the constructor of plugin
-func (app *Application) Register(constructor func() IPlugin) IPlugin {
-	return app.pm.register(constructor)
+func (app *Application) Register(plugin func() PluginImpl) Plugin {
+	plug := newPluginObj(plugin())
+	if app.findByName(plug.Name()) != nil {
+		return nil
+	}
+
+	app.plugins[plug.Name()] = plug
+	return plug
 }
 
-// plugin manager, key = type.Name()
-type pluginManager struct {
-	plugins map[string]IPlugin
-}
-
-func (pm pluginManager) find(name string) IPlugin {
-	if plugin, ok := pm.plugins[name]; ok {
+func (app Application) findByName(name string) Plugin {
+	if plugin, ok := app.plugins[name]; ok {
 		return plugin
 	}
 	return nil
 }
 
-func (pm pluginManager) register(constructor func() IPlugin) IPlugin {
-	p := constructor()
-	name := GetNameByType(p)
-	plugin := pm.find(name)
-	if plugin != nil {
+func (app Application) find(plugin func() PluginImpl) Plugin {
+	name := pluginName{}
+	name.Set(plugin())
+	if plugin, ok := app.plugins[name.Name()]; ok {
 		return plugin
 	}
-
-	pm.plugins[name] = p
-	return p
+	return nil
 }
 
+/*
+type pluginWrapper struct {
+	name string
+	plugin IPlugin
+	constructor func() IPlugin
+	state State
+}
+
+func (pw *pluginWrapper) initialize() {
+	if pw.state != Registered {
+		panic(fmt.Sprintf("plugin %s state is %v(need %v).", pw.state, Registered))
+	}
+
+	if pw.plugin == nil {
+		pw.plugin = pw.constructor()
+		if pw.plugin == nil {
+			panic(fmt.Sprintf("plugin %s constructor() failed.", pw.name))
+		}
+	}
+
+	for _, name := range pw.plugin.RequireDependencies() {
+		dependency := App().Get(name)
+		if dependency == nil {
+			panic(fmt.Sprintf("plugin %s constructor() failed.", pw.name))
+		}
+		dependency.Initialize()
+	}
+
+	pw.plugin.Initialize()
+}
+
+func (pw *pluginWrapper) startup() {
+
+}
+
+func (pw *pluginWrapper) shutdown() {
+
+}
+
+func (pw *pluginWrapper) getState() State {
+	return pw.state
+}
+*/

@@ -10,29 +10,35 @@ func init() {
 }
 
 func constructor() appbase.IPlugin {
-	return &myplugin{}
+	return &myplugin{
+		state: appbase.Registered,
+		}
 }
 
 type myplugin struct {
 	id int
+	state appbase.State
 }
 
-func (*myplugin) GetState() appbase.State {
-	return appbase.Registered
+func (p *myplugin) GetState() appbase.State {
+	return p.state
 }
 
-func (*myplugin) SetOptions() {
-
-}
-
-func (*myplugin) Initialize() {
-	fmt.Printf("myplugin Initialize ...\n")
-}
-
-func (*myplugin) Startup() {
+func (p *myplugin) SetOptions() {
 
 }
 
-func (*myplugin) Shutdown() {
+func (p *myplugin) Initialize() {
+	fmt.Printf("myplugin Initializing ...\n")
+	p.state = appbase.Initialized
+}
 
+func (p *myplugin) Startup() {
+	fmt.Printf("myplugin Starting ...\n")
+	p.state = appbase.Started
+}
+
+func (p *myplugin) Shutdown() {
+	fmt.Printf("myplugin Stoping ...\n")
+	p.state = appbase.Stopped
 }
