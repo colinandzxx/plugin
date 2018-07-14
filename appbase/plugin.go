@@ -35,6 +35,14 @@ type PluginDependence interface {
 	Require(do func(p Plugin))
 }
 
+func PluginRequire(do func(p Plugin), requiredPlugins... func() PluginImpl) {
+	for _, requiredPlugin := range requiredPlugins {
+		plug := App().find(requiredPlugin)
+		assert(plug != nil)
+		do(plug)
+	}
+}
+
 type PluginObj struct {
 	pImpl PluginImpl
 	state State

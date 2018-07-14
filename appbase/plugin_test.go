@@ -28,16 +28,9 @@ func (impl tstplugin) SetOptions() {
 func (impl tstplugin) Require(do func(p Plugin)) {
 	fmt.Printf("tstplugin Require ...\n")
 
-	plugins := []func () PluginImpl{
+	PluginRequire(do,
 		func () PluginImpl { return &tst2plugin{}},
-		func () PluginImpl { return &tst3plugin{}},
-	}
-
-	for _, plugin := range plugins {
-		plug := App().find(plugin)
-		assert(plug != nil)
-		do(plug)
-	}
+		func () PluginImpl { return &tst3plugin{}})
 }
 
 func Test_tstplugin(t *testing.T) {
@@ -96,15 +89,8 @@ func (impl tst2plugin) SetOptions() {
 func (impl tst2plugin) Require(do func(p Plugin)) {
 	fmt.Printf("tst2plugin Require ...\n")
 
-	plugins := []func () PluginImpl{
-		func () PluginImpl { return &tst3plugin{}},
-	}
-
-	for _, plugin := range plugins {
-		plug := App().find(plugin)
-		assert(plug != nil)
-		do(plug)
-	}
+	PluginRequire(do,
+		func () PluginImpl { return &tst3plugin{}})
 }
 
 type tst3plugin struct {
