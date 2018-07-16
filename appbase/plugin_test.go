@@ -6,7 +6,6 @@ import (
 )
 
 type tstplugin struct {
-
 }
 
 func (impl tstplugin) Initialize() {
@@ -29,45 +28,11 @@ func (impl tstplugin) Require(do func(p Plugin)) {
 	fmt.Printf("tstplugin Require ...\n")
 
 	PluginRequire(do,
-		func () PluginImpl { return &tst2plugin{}},
-		func () PluginImpl { return &tst3plugin{}})
-}
-
-func Test_tstplugin(t *testing.T) {
-	plug := App().Register(func () PluginImpl {
-		return &tstplugin{}
-	})
-	if plug != nil {
-		fmt.Printf("plug name: %s\n", plug.Name())
-	} else {
-		fmt.Printf("Register() error\n")
-	}
-
-	plug2 := App().Register(func () PluginImpl {
-		return &tst2plugin{}
-	})
-	if plug2 != nil {
-		fmt.Printf("plug name: %s\n", plug2.Name())
-	} else {
-		fmt.Printf("Register() error\n")
-	}
-
-	plug3 := App().Register(func () PluginImpl {
-		return &tst3plugin{}
-	})
-	if plug3 != nil {
-		fmt.Printf("plug name: %s\n", plug3.Name())
-	} else {
-		fmt.Printf("Register() error\n")
-	}
-
-	plug.Initialize()
-	plug.Startup()
-	plug.Shutdown()
+		func() PluginImpl { return &tst2plugin{} },
+		func() PluginImpl { return &tst3plugin{} })
 }
 
 type tst2plugin struct {
-
 }
 
 func (impl tst2plugin) Initialize() {
@@ -90,11 +55,10 @@ func (impl tst2plugin) Require(do func(p Plugin)) {
 	fmt.Printf("tst2plugin Require ...\n")
 
 	PluginRequire(do,
-		func () PluginImpl { return &tst3plugin{}})
+		func() PluginImpl { return &tst3plugin{} })
 }
 
 type tst3plugin struct {
-
 }
 
 func (impl tst3plugin) Initialize() {
@@ -115,4 +79,37 @@ func (impl tst3plugin) SetOptions() {
 
 func (impl tst3plugin) Require(do func(p Plugin)) {
 	fmt.Printf("tst3plugin Require ...\n")
+}
+
+func Test_tstplugin(t *testing.T) {
+	plug := App().Register(func() PluginImpl {
+		return &tstplugin{}
+	})
+	if plug != nil {
+		fmt.Printf("plug name: %s\n", plug.Name())
+	} else {
+		fmt.Printf("Register() error\n")
+	}
+
+	plug2 := App().Register(func() PluginImpl {
+		return &tst2plugin{}
+	})
+	if plug2 != nil {
+		fmt.Printf("plug name: %s\n", plug2.Name())
+	} else {
+		fmt.Printf("Register() error\n")
+	}
+
+	plug3 := App().Register(func() PluginImpl {
+		return &tst3plugin{}
+	})
+	if plug3 != nil {
+		fmt.Printf("plug name: %s\n", plug3.Name())
+	} else {
+		fmt.Printf("Register() error\n")
+	}
+
+	plug.Initialize()
+	plug.Startup()
+	plug.Shutdown()
 }

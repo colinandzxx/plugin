@@ -1,8 +1,8 @@
 package main
 
 import (
-	"plugin/appbase"
 	"fmt"
+	"plugin/appbase"
 )
 
 func init() {
@@ -12,11 +12,11 @@ func init() {
 func constructor() appbase.IPlugin {
 	return &myplugin{
 		state: appbase.Registered,
-		}
+	}
 }
 
 type myplugin struct {
-	id int
+	id    int
 	state appbase.State
 }
 

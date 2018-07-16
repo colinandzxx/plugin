@@ -3,6 +3,7 @@ package appbase
 import "reflect"
 
 type State int
+
 const (
 	Registered  = iota ///< the plugin is constructed but doesn't do anything
 	Initialized        ///< the plugin has initialized any state required but is idle
@@ -35,9 +36,9 @@ type PluginDependence interface {
 	Require(do func(p Plugin))
 }
 
-func PluginRequire(do func(p Plugin), requiredPlugins... func() PluginImpl) {
+func PluginRequire(do func(p Plugin), requiredPlugins ...func() PluginImpl) {
 	for _, requiredPlugin := range requiredPlugins {
-		plug := App().find(requiredPlugin)
+		plug := App().Find(requiredPlugin)
 		assert(plug != nil)
 		do(plug)
 	}
@@ -46,7 +47,7 @@ func PluginRequire(do func(p Plugin), requiredPlugins... func() PluginImpl) {
 type PluginObj struct {
 	pImpl PluginImpl
 	state State
-	name pluginName
+	name  pluginName
 }
 
 func newPluginObj(pImpl PluginImpl) *PluginObj {
@@ -69,7 +70,7 @@ func (obj *PluginObj) Initialize() {
 		})
 		obj.pImpl.Initialize()
 
-		// app().Initialize
+		App().pluginInitialized(obj)
 	}
 	assert(obj.state == Initialized)
 }
@@ -84,7 +85,7 @@ func (obj *PluginObj) Startup() {
 		})
 		obj.pImpl.Startup()
 
-		// app().Start
+		App().pluginStarted(obj)
 	}
 	assert(obj.state == Started)
 }
@@ -92,8 +93,10 @@ func (obj *PluginObj) Startup() {
 func (obj *PluginObj) Shutdown() {
 	//assert(obj.state == Started)
 
-	obj.state = Stopped
-	obj.pImpl.Shutdown()
+	if obj.state == Started {
+		obj.state = Stopped
+		obj.pImpl.Shutdown()
+	}
 }
 
 func (obj PluginObj) GetState() State {
@@ -106,10 +109,10 @@ func (obj PluginObj) Name() string {
 
 type pluginName struct {
 	pImpl PluginImpl
-	name string
+	name  string
 }
 
-func (pn *pluginName) Set(pImpl interface{})  {
+func (pn *pluginName) Set(pImpl interface{}) {
 	ppImpl := reflect.TypeOf(pImpl).Elem()
 	required := reflect.TypeOf((*PluginImpl)(nil)).Elem()
 	assert(ppImpl.Implements(required))

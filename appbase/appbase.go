@@ -6,7 +6,7 @@ import (
 
 var (
 	instance *Application
-	once sync.Once
+	once     sync.Once
 )
 
 // get the Application singleton
@@ -14,26 +14,23 @@ func App() *Application {
 	once.Do(func() {
 		instance = &Application{
 			plugins: make(map[string]Plugin),
-			}
+			initializedPlugins: make([]Plugin, 0),
+			runningPlugins: make([]Plugin, 0),
+		}
 	})
 	return instance
 }
 
 type Application struct {
-	plugins map[string]Plugin
-}
-
-// get plugin by plugin type name
-func (app *Application) GetByName(name string) Plugin {
-	plug := app.findByName(name)
-	assertEx(plug != nil, "unable to find plugin: " + name)
-	return plug
+	plugins            map[string]Plugin ///< all registered plugins
+	initializedPlugins []Plugin
+	runningPlugins     []Plugin
 }
 
 // register plugin, need input the constructor of plugin
 func (app *Application) Register(plugin func() PluginImpl) Plugin {
 	plug := newPluginObj(plugin())
-	if app.findByName(plug.Name()) != nil {
+	if app.FindByName(plug.Name()) != nil {
 		return nil
 	}
 
@@ -41,20 +38,75 @@ func (app *Application) Register(plugin func() PluginImpl) Plugin {
 	return plug
 }
 
-func (app Application) findByName(name string) Plugin {
+func (app *Application) Initialize(plugins... func() PluginImpl) bool {
+	// TODO: options
+
+	// Initialize plugins
+	for _, plugin := range plugins {
+		plug := app.Find(plugin)
+		assert(plug != nil)
+		plug.Initialize()
+	}
+
+	return true
+}
+
+func (app *Application) Startup() {
+	defer func() {
+		if err := recover(); err != nil {
+			app.Shutdown()
+			assert(false)
+		}
+	}()
+
+	for _, plug := range app.initializedPlugins {
+		plug.Startup()
+	}
+}
+
+func (app *Application) Shutdown() {
+	for _, plug := range app.runningPlugins {
+		plug.Shutdown()
+	}
+	app.runningPlugins = nil
+	app.initializedPlugins = nil
+	app.plugins = nil
+}
+
+func (app *Application) pluginInitialized(plug Plugin) {
+	app.initializedPlugins = append(app.initializedPlugins, plug)
+}
+
+func (app *Application) pluginStarted(plug Plugin) {
+	app.runningPlugins = append(app.runningPlugins, plug)
+}
+
+// get plugin by plugin type name
+func (app *Application) GetByName(name string) Plugin {
+	plug := app.FindByName(name)
+	assertEx(plug != nil, "unable to get plugin: "+name)
+	return plug
+}
+
+func (app *Application) Get(plugin func() PluginImpl) Plugin {
+	name := pluginName{}
+	name.Set(plugin())
+	plug := app.FindByName(name.Name())
+	assertEx(plug != nil, "unable to get plugin: "+name.Name())
+	return plug
+}
+
+func (app Application) FindByName(name string) Plugin {
 	if plugin, ok := app.plugins[name]; ok {
 		return plugin
 	}
 	return nil
 }
 
-func (app Application) find(plugin func() PluginImpl) Plugin {
+func (app Application) Find(plugin func() PluginImpl) Plugin {
 	name := pluginName{}
 	name.Set(plugin())
-	if plugin, ok := app.plugins[name.Name()]; ok {
-		return plugin
-	}
-	return nil
+	return app.FindByName(name.Name())
 }
 
 /*
