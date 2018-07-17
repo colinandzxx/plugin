@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func Test_app(t *testing.T) {
+func Test_run(t *testing.T) {
 	plug := App().Register(func() PluginImpl {
 		return &tstplugin{}
 	})
@@ -46,7 +46,7 @@ func Test_app(t *testing.T) {
 		func() PluginImpl {
 			return &tst3plugin{}
 		})
-	App().SetAction(func (ctx *cli.Context) error {
+	App().SetAction(func(ctx *cli.Context) error {
 		App().Initialize(
 			func() PluginImpl {
 				return &tstplugin{}
@@ -65,5 +65,18 @@ func Test_app(t *testing.T) {
 		return nil
 	})
 
+	fmt.Printf("====================================================================================\n")
 	App().Run([]string{os.Args[0], "-h"})
+
+	fmt.Printf("====================================================================================\n")
+	//App().Run([]string{os.Args[0], "-tst3"})
+
+	fmt.Printf("====================================================================================\n")
+	//App().Run([]string{os.Args[0], "--tst3_bool"})
+
+	fmt.Printf("====================================================================================\n")
+	//App().Run([]string{os.Args[0], "-tst_str"})
+
+	fmt.Printf("====================================================================================\n")
+	App().Run([]string{os.Args[0], "-tst2_str", "AA222"})
 }
