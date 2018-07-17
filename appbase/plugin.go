@@ -16,7 +16,7 @@ type PluginImpl interface {
 	Startup()
 	Shutdown()
 
-	SetOptions()
+	SetFlags(fg *flagGroup)
 
 	PluginDependence
 }
@@ -24,6 +24,7 @@ type PluginImpl interface {
 type Plugin interface {
 	GetState() State
 	Name() string
+	SetFlags() []flagGroup
 
 	Initialize()
 	Startup()
@@ -47,6 +48,7 @@ func PluginRequire(do func(p Plugin), requiredPlugins ...func() PluginImpl) {
 type PluginObj struct {
 	pImpl PluginImpl
 	state State
+	flag bool
 	name  pluginName
 }
 
@@ -54,6 +56,7 @@ func newPluginObj(pImpl PluginImpl) *PluginObj {
 	plugObj := &PluginObj{
 		pImpl,
 		Registered,
+		false,
 		pluginName{},
 	}
 	plugObj.name.Set(pImpl)
@@ -105,6 +108,19 @@ func (obj PluginObj) GetState() State {
 
 func (obj PluginObj) Name() string {
 	return obj.name.Name()
+}
+
+func (obj *PluginObj) SetFlags() (flags []flagGroup) {
+	if !obj.flag {
+		obj.flag = true
+		fg := NewFlags(obj.Name())
+		obj.pImpl.Require(func(p Plugin) {
+			flags = append(flags, p.SetFlags()...)
+		})
+		obj.pImpl.SetFlags(fg)
+		flags = append(flags, *fg)
+	}
+	return flags
 }
 
 type pluginName struct {

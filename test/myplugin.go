@@ -24,7 +24,7 @@ func (p *myplugin) GetState() appbase.State {
 	return p.state
 }
 
-func (p *myplugin) SetOptions() {
+func (p *myplugin) SetFlags() {
 
 }
 
